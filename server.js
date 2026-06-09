@@ -14,9 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '12341234', 
+    password: '12341234', // 👈 본인의 실제 MySQL root 비밀번호로 변경하세요!
     database: 'todo_db',
-    dateStrings: true // 👈 [중요] 날짜가 시차 때문에 하루 전날로 밀리는 버그를 방지합니다.
+    dateStrings: true      // 👈 날짜가 시차 때문에 하루 전날로 밀리는 버그를 방지합니다.
 });
 
 db.connect((err) => {
@@ -76,7 +76,7 @@ app.post('/api/todos', (req, res) => {
     });
 });
 
-// [기능 3] 사용자의 일정 목록 가져오기 API (todo_id 추가 조회)
+// [기능 3] 사용자의 일정 목록 가져오기 API
 app.get('/api/todos/:user_id', (req, res) => {
     const userId = req.params.user_id;
     const query = 'SELECT todo_id, todo_date, subject, content, is_completed FROM todos WHERE user_id = ? ORDER BY todo_date ASC';
@@ -87,7 +87,7 @@ app.get('/api/todos/:user_id', (req, res) => {
     });
 });
 
-// [기능 4] 할 일 완료 여부 토글 API 👈 [새로 추가됨]
+// [기능 4] 할 일 완료 여부 토글 API (DB 반영)
 app.put('/api/todos/:todo_id', (req, res) => {
     const todoId = req.params.todo_id;
     const { is_completed } = req.body;
@@ -99,6 +99,6 @@ app.put('/api/todos/:todo_id', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
 });
