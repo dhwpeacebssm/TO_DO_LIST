@@ -5,45 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>학습 및 프로젝트 관리 To-Do</title>
     <style>
-        /* 기본 스타일 초기화 */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        
-        /* 네비게이션 바 */
         nav { width: 100%; background-color: #2c3e50; padding: 15px; display: flex; justify-content: center; gap: 20px; }
         nav a { color: white; text-decoration: none; font-weight: bold; cursor: pointer; padding: 8px 16px; border-radius: 4px; transition: 0.3s; }
         nav a:hover { background-color: #34495e; }
         nav a.active { background-color: #3498db; }
-
-        /* 컨테이너 및 섹션 */
         .container { width: 100%; max-width: 800px; background: white; margin: 30px 20px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .content-section { display: none; }
         .content-section.active { display: block; }
-        
-
-        /* 공통 폼 및 버튼 */
         h2 { margin-bottom: 20px; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
-        input[type="text"], input[type="password"], input[type="date"], select { width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 1px solid #ccc; border-radius: 6px; }
+        input[type="text"], input[type="password"], input[type="date"] { width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 1px solid #ccc; border-radius: 6px; }
         button { background-color: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         button:hover { background-color: #2980b9; }
-
-        /* 로그인 섹션 */
         .login-box { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; }
-        
-        /* 캘린더 스타일 */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 100px); gap: 10px; justify-content: center; margin-top: 20px; overflow-x: auto; }
         .calendar-day { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; min-height: 90px; font-size: 14px; position: relative; }
         .calendar-day .date-num { font-weight: bold; color: #666; }
         .calendar-day .tags-container { margin-top: 5px; display: flex; flex-direction: column; gap: 4px; }
         .calendar-day .subject-tag { background: #e8f4fd; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* 프로젝트 관리 리스트 */
         .todo-list { list-style: none; margin-top: 20px; }
         .todo-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; border-bottom: 1px solid #edf2f7; }
         .todo-item.completed span { text-decoration: line-through; color: #a0aec0; }
         .todo-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-        
-        /* 소개창 스타일 */
         .intro-box { background: #ebf8ff; border-left: 4px solid #3182ce; padding: 15px; border-radius: 4px; margin-bottom: 25px; line-height: 1.6; }
     </style>
 </head>
@@ -61,10 +45,10 @@
         <h2>로그인 / 회원가입</h2>
         <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 20px;">계정이 없다면 입력한 정보로 자동 가입됩니다.</p>
         <form onsubmit="handleLogin(event)">
-            <label for="username" style="text-align: left; display: block; font-weight: bold;">사용자 아이디</label>
+            <label style="text-align: left; display: block; font-weight: bold;">사용자 아이디</label>
             <input type="text" id="username" placeholder="아이디를 입력하세요" required>
             
-            <label for="password" style="text-align: left; display: block; font-weight: bold;">비밀번호</label>
+            <label style="text-align: left; display: block; font-weight: bold;">비밀번호</label>
             <input type="password" id="password" placeholder="비밀번호를 입력하세요" required>
             
             <button type="submit">로그인 및 회원가입</button>
@@ -72,7 +56,6 @@
     </div>
 
     <div id="main-content" class="container" style="display: none;">
-        
         <div id="section-main" class="content-section active">
             <h2>🏠 대시보드</h2>
             <div class="intro-box">
@@ -85,8 +68,6 @@
 
         <div id="section-calendar" class="content-section">
             <h2>📅 이번 주 캘린더</h2>
-            <p style="color:#7f8c8d; margin-bottom: 15px;">등록된 과목과 날짜별 일정을 확인할 수 있습니다.</p>
-            
             <div class="calendar-grid">
                 <div class="calendar-day" data-date="6/8"><span class="date-num">월 (6/8)</span><div class="tags-container"></div></div>
                 <div class="calendar-day" data-date="6/9"><span class="date-num">화 (6/9)</span><div class="tags-container"></div></div>
@@ -113,24 +94,16 @@
 
         <div id="section-project" class="content-section">
             <h2>🌿 프로젝트 및 할 일 관리</h2>
-            <p style="color:#7f8c8d;">내가 완료한 작업을 체크하여 진행 상황을 기록하세요.</p>
-            
-            <ul class="todo-list">
-                </ul>
+            <ul class="todo-list"></ul>
         </div>
-
     </div>
 
     <script>
         let currentUserId = "";
 
-        // 탭 메뉴 전환 및 실시간 데이터 로딩 연동
         function showSection(sectionId) {
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(sec => sec.classList.remove('active'));
-            
-            const navLinks = document.querySelectorAll('nav a');
-            navLinks.forEach(link => link.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('nav a').forEach(link => link.classList.remove('active'));
 
             document.getElementById(`section-${sectionId}`).classList.add('active');
             document.getElementById(`nav-${sectionId}`).classList.add('active');
@@ -140,7 +113,6 @@
             }
         }
 
-        // 로그인 처리
         async function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
@@ -154,26 +126,21 @@
                 });
                 
                 const result = await response.json();
-                
                 if (response.ok && result.success) {
                     currentUserId = result.username; 
-                    
                     document.getElementById('user-display').innerText = currentUserId;
                     document.getElementById('login-section').style.display = 'none';
                     document.getElementById('main-nav').style.display = 'flex';
                     document.getElementById('main-content').style.display = 'block';
-                    
                     showSection('main');
                 } else {
                     alert(result.message || '로그인 실패');
                 }
             } catch (error) {
-                console.error(error);
                 alert('서버와 통신 중 오류가 발생했습니다.');
             }
         }
 
-        // 로그아웃 처리
         function logout() {
             currentUserId = "";
             document.getElementById('login-section').style.display = 'block';
@@ -183,7 +150,6 @@
             document.getElementById('password').value = "";
         }
 
-        // 과목 추가 처리
         async function handleAddSubject(event) {
             event.preventDefault();
             const subjectName = document.getElementById('new-subject-name').value;
@@ -201,7 +167,6 @@
                     })
                 });
 
-                const result = await response.json();
                 if (response.ok) {
                     alert(`🎉 [${subjectName}] 일정이 정상 등록되었습니다!`);
                     document.getElementById('new-subject-name').value = '';
@@ -211,12 +176,10 @@
                     alert('일정 등록 실패');
                 }
             } catch (error) {
-                console.error(error);
                 alert('서버 통신 실패');
             }
         }
 
-        // MySQL 데이터베이스에서 저장된 일정을 가져와 배치하는 함수
         async function loadData() {
             if (!currentUserId) return;
 
@@ -224,19 +187,13 @@
                 const response = await fetch(`/api/todos/${currentUserId}`);
                 const todos = await response.json();
 
-                // 1. 프로젝트 To-Do 리스트 초기화
                 const todoListUl = document.querySelector('.todo-list');
                 todoListUl.innerHTML = ''; 
 
-                // 2. 캘린더 초기화
                 const dayBoxes = document.querySelectorAll('.calendar-grid .calendar-day');
-                dayBoxes.forEach(box => {
-                    box.querySelector('.tags-container').innerHTML = '';
-                });
+                dayBoxes.forEach(box => box.querySelector('.tags-container').innerHTML = '');
 
-                // 3. 데이터 매핑
                 todos.forEach(todo => {
-                    // 프로젝트 탭 컴포넌트 추가 (data-id로 고유 번호 저장)
                     const li = document.createElement('li');
                     li.className = `todo-item ${todo.is_completed ? 'completed' : ''}`;
                     li.innerHTML = `
@@ -245,33 +202,30 @@
                     `;
                     todoListUl.appendChild(li);
 
-                    // server.js에서 dateStrings 옵션을 켰으므로 todo_date가 'YYYY-MM-DD'로 바로 옵니다.
-                    const [year, month, day] = todo.todo_date.split('-');
-                    const targetMatchDate = `${parseInt(month)}/${parseInt(day)}`; 
+                    if(todo.todo_date) {
+                        const [year, month, day] = todo.todo_date.split('-');
+                        const targetMatchDate = `${parseInt(month)}/${parseInt(day)}`; 
 
-                    // 캘린더 일치하는 날짜에 과목명 배치
-                    dayBoxes.forEach(box => {
-                        if (box.getAttribute('data-date') === targetMatchDate) {
-                            const tag = document.createElement('span');
-                            tag.className = 'subject-tag';
-                            tag.innerText = todo.subject;
-                            box.querySelector('.tags-container').appendChild(tag);
-                        }
-                    });
+                        dayBoxes.forEach(box => {
+                            if (box.getAttribute('data-date') === targetMatchDate) {
+                                const tag = document.createElement('span');
+                                tag.className = 'subject-tag';
+                                tag.innerText = todo.subject;
+                                box.querySelector('.tags-container').appendChild(tag);
+                            }
+                        });
+                    }
                 });
-
             } catch (error) {
-                console.error('데이터를 불러오는 중 에러 발생:', error);
+                console.error('데이터 로딩 에러:', error);
             }
         }
 
-        // 프로젝트 할 일 체크박스 토글 및 데이터베이스 반영 👈 [수정됨]
         async function toggleTodo(checkbox, todoId) {
             const listItem = checkbox.parentElement;
             const isCompleted = checkbox.checked ? 1 : 0;
 
             try {
-                // DB 상태 수정을 위해 PUT 요청 전송
                 const response = await fetch(`/api/todos/${todoId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -279,17 +233,13 @@
                 });
 
                 if (response.ok) {
-                    if (checkbox.checked) {
-                        listItem.classList.add('completed');
-                    } else {
-                        listItem.classList.remove('completed');
-                    }
+                    if (checkbox.checked) listItem.classList.add('completed');
+                    else listItem.classList.remove('completed');
                 } else {
-                    alert('상태 업데이트에 실패했습니다.');
-                    checkbox.checked = !checkbox.checked; // 실패 시 원래대로 되돌림
+                    alert('상태 업데이트 실패');
+                    checkbox.checked = !checkbox.checked;
                 }
             } catch (error) {
-                console.error(error);
                 alert('서버 통신 실패');
                 checkbox.checked = !checkbox.checked;
             }
