@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '본인의_MySQL_비밀번호', // 👈 필수 수정!
+    password: '12341234', // 👈 필수 수정!
     database: 'todo_db'
 });
 
