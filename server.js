@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'maru0130^^', 
+    password: '12341234', 
     database: 'todo_db',
     dateStrings: true // 👈 [중요] 날짜가 시차 때문에 하루 전날로 밀리는 버그를 방지합니다.
 });
