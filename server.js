@@ -14,8 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '12341234', // 👈 필수 수정!
-    database: 'todo_db'
+    password: '12341234', 
+    database: 'todo_db',
+    dateStrings: true // 👈 [중요] 날짜가 시차 때문에 하루 전날로 밀리는 버그를 방지합니다.
 });
 
 db.connect((err) => {
@@ -36,13 +37,11 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // 1. 기존 유저가 있는지 확인
         const userQuery = 'SELECT * FROM users WHERE user_id = ?';
         db.query(userQuery, [username], async (err, results) => {
             if (err) return res.status(500).json({ error: 'DB 조회 에러' });
 
             if (results.length > 0) {
-                // 유저가 존재하면 -> 비밀번호 검증 (로그인)
                 const isMatch = await bcrypt.compare(password, results[0].password);
                 if (isMatch) {
                     return res.json({ success: true, message: '로그인 성공', username });
@@ -50,7 +49,6 @@ app.post('/api/login', async (req, res) => {
                     return res.status(401).json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
                 }
             } else {
-                // 유저가 없으면 -> 신규 가입
                 const hashedPassword = await bcrypt.hash(password, 10);
                 const registerQuery = 'INSERT INTO users (user_id, password) VALUES (?, ?)';
                 db.query(registerQuery, [username, hashedPassword], (err, result) => {
@@ -78,15 +76,26 @@ app.post('/api/todos', (req, res) => {
     });
 });
 
-// [기능 3] 사용자의 이번 주 일정 가져오기 API
+// [기능 3] 사용자의 일정 목록 가져오기 API (todo_id 추가 조회)
 app.get('/api/todos/:user_id', (req, res) => {
     const userId = req.params.user_id;
-    // 간이 구현을 위해 사용자의 전체 일정을 조회합니다.
-    const query = 'SELECT todo_date, subject, content, is_completed FROM todos WHERE user_id = ? ORDER BY todo_date ASC';
+    const query = 'SELECT todo_id, todo_date, subject, content, is_completed FROM todos WHERE user_id = ? ORDER BY todo_date ASC';
     
     db.query(query, [userId], (err, results) => {
         if (err) return res.status(500).json({ error: '조회 실패' });
         res.json(results);
+    });
+});
+
+// [기능 4] 할 일 완료 여부 토글 API 👈 [새로 추가됨]
+app.put('/api/todos/:todo_id', (req, res) => {
+    const todoId = req.params.todo_id;
+    const { is_completed } = req.body;
+
+    const query = 'UPDATE todos SET is_completed = ? WHERE todo_id = ?';
+    db.query(query, [is_completed, todoId], (err, result) => {
+        if (err) return res.status(500).json({ error: '상태 업데이트 실패' });
+        res.json({ success: true, message: '상태가 변경되었습니다.' });
     });
 });
 
