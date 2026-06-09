@@ -135,13 +135,12 @@
             document.getElementById(`section-${sectionId}`).classList.add('active');
             document.getElementById(`nav-${sectionId}`).classList.add('active');
 
-            // 캘린더나 프로젝트 조회 탭을 누르면 자동으로 최신 DB 값을 새로 긁어옵니다.
             if (sectionId === 'calendar' || sectionId === 'project') {
                 loadData();
             }
         }
 
-        // 로그인 처리 (백엔드 MySQL 세션 연결용)
+        // 로그인 처리
         async function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
@@ -184,7 +183,7 @@
             document.getElementById('password').value = "";
         }
 
-        // 과목 추가 처리 (핵심 변경점: 사용자가 선택한 과목명과 날짜를 서버를 통해 MySQL로 전달)
+        // 과목 추가 처리
         async function handleAddSubject(event) {
             event.preventDefault();
             const subjectName = document.getElementById('new-subject-name').value;
@@ -207,7 +206,7 @@
                     alert(`🎉 [${subjectName}] 일정이 정상 등록되었습니다!`);
                     document.getElementById('new-subject-name').value = '';
                     document.getElementById('subject-date').value = '';
-                    showSection('calendar'); // 과목 등록 성공 후 캘린더 화면으로 이동하며 새로고침 실행
+                    showSection('calendar'); 
                 } else {
                     alert('일정 등록 실패');
                 }
@@ -217,7 +216,7 @@
             }
         }
 
-        // MySQL 데이터베이스에서 저장된 일정을 가져와 캘린더 날짜칸과 투두 리스트에 배치하는 함수
+        // MySQL 데이터베이스에서 저장된 일정을 가져와 배치하는 함수
         async function loadData() {
             if (!currentUserId) return;
 
@@ -225,34 +224,32 @@
                 const response = await fetch(`/api/todos/${currentUserId}`);
                 const todos = await response.json();
 
-                // 1. 프로젝트 To-Do 리스트 그리기
+                // 1. 프로젝트 To-Do 리스트 초기화
                 const todoListUl = document.querySelector('.todo-list');
                 todoListUl.innerHTML = ''; 
 
-                // 2. 캘린더의 동적 태그 컨테이너 영역들 일단 청소하기
+                // 2. 캘린더 초기화
                 const dayBoxes = document.querySelectorAll('.calendar-grid .calendar-day');
                 dayBoxes.forEach(box => {
                     box.querySelector('.tags-container').innerHTML = '';
                 });
 
-                // 3. 서버에서 내려온 할 일(과목) 배열 순회하며 화면에 맵핑
+                // 3. 데이터 매핑
                 todos.forEach(todo => {
-                    // 프로젝트 탭 컴포넌트 추가
+                    // 프로젝트 탭 컴포넌트 추가 (data-id로 고유 번호 저장)
                     const li = document.createElement('li');
-                    li.className = 'todo-item';
+                    li.className = `todo-item ${todo.is_completed ? 'completed' : ''}`;
                     li.innerHTML = `
                         <span>📚 [${todo.subject}] ${todo.content}</span>
-                        <input type="checkbox" ${todo.is_completed ? 'checked' : ''} onchange="toggleTodo(this)">
+                        <input type="checkbox" ${todo.is_completed ? 'checked' : ''} onchange="toggleTodo(this, ${todo.todo_id})">
                     `;
                     todoListUl.appendChild(li);
 
-                    // 캘린더 매칭 엔진 작동
-                    // 데이터베이스 날짜 형식(주로 ISO)에서 'YYYY-MM-DD' 문자열 파싱
-                    const formattedDate = todo.todo_date.split('T')[0]; 
-                    const [year, month, day] = formattedDate.split('-');
-                    const targetMatchDate = `${parseInt(month)}/${parseInt(day)}`; // 예: "6/8", "6/12" 형식 가공
+                    // server.js에서 dateStrings 옵션을 켰으므로 todo_date가 'YYYY-MM-DD'로 바로 옵니다.
+                    const [year, month, day] = todo.todo_date.split('-');
+                    const targetMatchDate = `${parseInt(month)}/${parseInt(day)}`; 
 
-                    // HTML 캘린더의 각 요일 칸 중 data-date 속성과 맞아떨어지는 자리에 과목 태그 추가
+                    // 캘린더 일치하는 날짜에 과목명 배치
                     dayBoxes.forEach(box => {
                         if (box.getAttribute('data-date') === targetMatchDate) {
                             const tag = document.createElement('span');
@@ -268,13 +265,33 @@
             }
         }
 
-        // 프로젝트 할 일 체크박스 토글 스타일 스타일 제어
-        function toggleTodo(checkbox) {
+        // 프로젝트 할 일 체크박스 토글 및 데이터베이스 반영 👈 [수정됨]
+        async function toggleTodo(checkbox, todoId) {
             const listItem = checkbox.parentElement;
-            if (checkbox.checked) {
-                listItem.classList.add('completed');
-            } else {
-                listItem.classList.remove('completed');
+            const isCompleted = checkbox.checked ? 1 : 0;
+
+            try {
+                // DB 상태 수정을 위해 PUT 요청 전송
+                const response = await fetch(`/api/todos/${todoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_completed: isCompleted })
+                });
+
+                if (response.ok) {
+                    if (checkbox.checked) {
+                        listItem.classList.add('completed');
+                    } else {
+                        listItem.classList.remove('completed');
+                    }
+                } else {
+                    alert('상태 업데이트에 실패했습니다.');
+                    checkbox.checked = !checkbox.checked; // 실패 시 원래대로 되돌림
+                }
+            } catch (error) {
+                console.error(error);
+                alert('서버 통신 실패');
+                checkbox.checked = !checkbox.checked;
             }
         }
     </script>
