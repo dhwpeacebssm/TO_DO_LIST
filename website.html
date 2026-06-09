@@ -30,11 +30,12 @@
         /* 로그인 섹션 */
         .login-box { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; }
         
-        /* 캘린더 스타일 (간이 구현) */
+        /* 캘린더 스타일 */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 100px); gap: 10px; justify-content: center; margin-top: 20px; overflow-x: auto; }
         .calendar-day { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; min-height: 90px; font-size: 14px; position: relative; }
         .calendar-day .date-num { font-weight: bold; color: #666; }
-        .calendar-day .subject-tag { background: #e8f4fd; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-top: 5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .calendar-day .tags-container { margin-top: 5px; display: flex; flex-direction: column; gap: 4px; }
+        .calendar-day .subject-tag { background: #e8f4fd; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* 프로젝트 관리 리스트 */
         .todo-list { list-style: none; margin-top: 20px; }
@@ -87,13 +88,13 @@
             <p style="color:#7f8c8d; margin-bottom: 15px;">등록된 과목과 날짜별 일정을 확인할 수 있습니다.</p>
             
             <div class="calendar-grid">
-                <div class="calendar-day"><span class="date-num">월 (6/8)</span><span class="subject-tag">데이터베이스</span></div>
-                <div class="calendar-day"><span class="date-num">화 (6/9)</span></div>
-                <div class="calendar-day"><span class="date-num">수 (6/10)</span><span class="subject-tag">웹프로그래밍</span></div>
-                <div class="calendar-day"><span class="date-num">목 (6/11)</span></div>
-                <div class="calendar-day"><span class="date-num">금 (6/12)</span><span class="subject-tag">인공지능</span></div>
-                <div class="calendar-day"><span class="date-num">토 (6/13)</span></div>
-                <div class="calendar-day"><span class="date-num">일 (6/14)</span></div>
+                <div class="calendar-day" data-date="6/8"><span class="date-num">월 (6/8)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/9"><span class="date-num">화 (6/9)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/10"><span class="date-num">수 (6/10)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/11"><span class="date-num">목 (6/11)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/12"><span class="date-num">금 (6/12)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/13"><span class="date-num">토 (6/13)</span><div class="tags-container"></div></div>
+                <div class="calendar-day" data-date="6/14"><span class="date-num">일 (6/14)</span><div class="tags-container"></div></div>
             </div>
         </div>
 
@@ -115,39 +116,67 @@
             <p style="color:#7f8c8d;">내가 완료한 작업을 체크하여 진행 상황을 기록하세요.</p>
             
             <ul class="todo-list">
-                <li class="todo-item">
-                    <span>📚 데이터베이스 과제 제출하기</span>
-                    <input type="checkbox" onchange="toggleTodo(this)">
-                </li>
-                <li class="todo-item">
-                    <span>💻 웹페이지 HTML UI 설계 완성</span>
-                    <input type="checkbox" onchange="toggleTodo(this)">
-                </li>
-                <li class="todo-item">
-                    <span>📝 중간고사 오답노트 정리</span>
-                    <input type="checkbox" onchange="toggleTodo(this)">
-                </li>
-            </ul>
+                </ul>
         </div>
 
     </div>
 
     <script>
-        // 로그인 처리
-        function handleLogin(event) {
+        let currentUserId = "";
+
+        // 탭 메뉴 전환 및 실시간 데이터 로딩 연동
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(sec => sec.classList.remove('active'));
+            
+            const navLinks = document.querySelectorAll('nav a');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+            document.getElementById(`nav-${sectionId}`).classList.add('active');
+
+            // 캘린더나 프로젝트 조회 탭을 누르면 자동으로 최신 DB 값을 새로 긁어옵니다.
+            if (sectionId === 'calendar' || sectionId === 'project') {
+                loadData();
+            }
+        }
+
+        // 로그인 처리 (백엔드 MySQL 세션 연결용)
+        async function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
             
-            if(username.trim() !== "") {
-                document.getElementById('user-display').innerText = username;
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('main-nav').style.display = 'flex';
-                document.getElementById('main-content').style.display = 'block';
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    currentUserId = result.username; 
+                    
+                    document.getElementById('user-display').innerText = currentUserId;
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('main-nav').style.display = 'flex';
+                    document.getElementById('main-content').style.display = 'block';
+                    
+                    showSection('main');
+                } else {
+                    alert(result.message || '로그인 실패');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('서버와 통신 중 오류가 발생했습니다.');
             }
         }
 
         // 로그아웃 처리
         function logout() {
+            currentUserId = "";
             document.getElementById('login-section').style.display = 'block';
             document.getElementById('main-nav').style.display = 'none';
             document.getElementById('main-content').style.display = 'none';
@@ -155,35 +184,91 @@
             document.getElementById('password').value = "";
         }
 
-        // 탭 메뉴 전환
-        function showSection(sectionId) {
-            // 모든 섹션 숨기기
-            const sections = document.querySelectorAll('.content-section');
-            sections.forEach(sec => sec.classList.remove('active'));
-            
-            // 모든 네비게이션 active 제거
-            const navLinks = document.querySelectorAll('nav a');
-            navLinks.forEach(link => link.classList.remove('active'));
-
-            // 선택한 섹션 및 네비게이션 활성화
-            document.getElementById(`section-${sectionId}`).classList.add('active');
-            document.getElementById(`nav-${sectionId}`).classList.add('active');
-        }
-
-        // 과목 추가 처리 (얼럿 창으로 데이터 확인 예시)
-        function handleAddSubject(event) {
+        // 과목 추가 처리 (핵심 변경점: 사용자가 선택한 과목명과 날짜를 서버를 통해 MySQL로 전달)
+        async function handleAddSubject(event) {
             event.preventDefault();
             const subjectName = document.getElementById('new-subject-name').value;
             const subjectDate = document.getElementById('subject-date').value;
             
-            alert(`🎉 [${subjectName}] 과목이 ${subjectDate} 날짜로 성공적으로 등록되었습니다! (백엔드 연동 시 데이터베이스에 저장됩니다)`);
-            
-            document.getElementById('new-subject-name').value = '';
-            document.getElementById('subject-date').value = '';
-            showSection('calendar'); // 등록 후 캘린더로 이동
+            try {
+                const response = await fetch('/api/todos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        todo_date: subjectDate,
+                        subject: subjectName,
+                        content: `${subjectName} 과제 및 진도 체크`
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert(`🎉 [${subjectName}] 일정이 정상 등록되었습니다!`);
+                    document.getElementById('new-subject-name').value = '';
+                    document.getElementById('subject-date').value = '';
+                    showSection('calendar'); // 과목 등록 성공 후 캘린더 화면으로 이동하며 새로고침 실행
+                } else {
+                    alert('일정 등록 실패');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('서버 통신 실패');
+            }
         }
 
-        // 프로젝트 할 일 체크박스 토글
+        // MySQL 데이터베이스에서 저장된 일정을 가져와 캘린더 날짜칸과 투두 리스트에 배치하는 함수
+        async function loadData() {
+            if (!currentUserId) return;
+
+            try {
+                const response = await fetch(`/api/todos/${currentUserId}`);
+                const todos = await response.json();
+
+                // 1. 프로젝트 To-Do 리스트 그리기
+                const todoListUl = document.querySelector('.todo-list');
+                todoListUl.innerHTML = ''; 
+
+                // 2. 캘린더의 동적 태그 컨테이너 영역들 일단 청소하기
+                const dayBoxes = document.querySelectorAll('.calendar-grid .calendar-day');
+                dayBoxes.forEach(box => {
+                    box.querySelector('.tags-container').innerHTML = '';
+                });
+
+                // 3. 서버에서 내려온 할 일(과목) 배열 순회하며 화면에 맵핑
+                todos.forEach(todo => {
+                    // 프로젝트 탭 컴포넌트 추가
+                    const li = document.createElement('li');
+                    li.className = 'todo-item';
+                    li.innerHTML = `
+                        <span>📚 [${todo.subject}] ${todo.content}</span>
+                        <input type="checkbox" ${todo.is_completed ? 'checked' : ''} onchange="toggleTodo(this)">
+                    `;
+                    todoListUl.appendChild(li);
+
+                    // 캘린더 매칭 엔진 작동
+                    // 데이터베이스 날짜 형식(주로 ISO)에서 'YYYY-MM-DD' 문자열 파싱
+                    const formattedDate = todo.todo_date.split('T')[0]; 
+                    const [year, month, day] = formattedDate.split('-');
+                    const targetMatchDate = `${parseInt(month)}/${parseInt(day)}`; // 예: "6/8", "6/12" 형식 가공
+
+                    // HTML 캘린더의 각 요일 칸 중 data-date 속성과 맞아떨어지는 자리에 과목 태그 추가
+                    dayBoxes.forEach(box => {
+                        if (box.getAttribute('data-date') === targetMatchDate) {
+                            const tag = document.createElement('span');
+                            tag.className = 'subject-tag';
+                            tag.innerText = todo.subject;
+                            box.querySelector('.tags-container').appendChild(tag);
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('데이터를 불러오는 중 에러 발생:', error);
+            }
+        }
+
+        // 프로젝트 할 일 체크박스 토글 스타일 스타일 제어
         function toggleTodo(checkbox) {
             const listItem = checkbox.parentElement;
             if (checkbox.checked) {
