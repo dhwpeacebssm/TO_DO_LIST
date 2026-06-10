@@ -7,6 +7,12 @@
 
 ### 테이블 구성
 ### 1. users
-#### 1. user_id(varchar[50], not null): 사용자의 아이디를 입력받는다. 필수입력
+#### 1. user_id(varchar[50], not null): 사용자의 아이디를 입력받는다. 필수입력, 기본키
 #### 2. password(varchar[225], not null): 사용자의 비밀번호를 입력받는다. 보안을 위해 저장장소를 늘렸다. 필수입력
-#### 3. created_at
+#### 3. created_at (timestamp): 가입날짜를 받음
+
+### 1. todos
+#### 1. todo_id(int, auto increament): 자동으로 값 증가, 기본키
+#### 2. user_id(varchar[50]): 왜래키
+#### 3. todo_date(date, not null): 추가한 과목의 날짜를 입력받음. 팔수입력
+#### 4. subject(varchar[100]): 추가한 과목 이름을 입력받음
