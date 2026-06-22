@@ -7,8 +7,10 @@
 ### 3. today 체크리스트
 
 ### 테이블 구성
-### 1. users
-#### 1. user_id(varchar(50), not null): 사용자의 아이디를 입력받는다. 필수입력, 기본키
+
+| users | user_id(varchar(50), not null): 사용자의 아이디를 입력받는다. 필수입력, 기본키
+|-------|-------|
+
 #### 2. password(varchar(225), not null): 사용자의 비밀번호를 입력받는다. 보안을 위해 저장장소를 늘렸다. 필수입력
 #### 3. created_at (timestamp): 가입날짜를 받음
 
