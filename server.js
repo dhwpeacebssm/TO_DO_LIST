@@ -33,44 +33,66 @@ app.get('/', (req, res) => {
 });
 
 // [기능 1] 로그인 및 회원가입 API
+// server.js 의 app.post('/api/login', ...) 부분을 이 코드로 교체하세요.
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: '아이디와 비밀번호를 모두 입력해주세요.' });
+    }
 
     try {
         const userQuery = 'SELECT * FROM users WHERE user_id = ?';
         db.query(userQuery, [username], async (err, results) => {
             if (err) {
-                console.error("로그인 DB 에러:", err);
-                return res.status(500).json({ success: false, message: 'DB 조회 에러' });
+                console.error("❌ 로그인 DB 조회 에러:", err);
+                return res.status(500).json({ success: false, message: '데이터베이스 조회 중 오류가 발생했습니다.' });
             }
 
+            // 1. 사용자가 없으면 자동 회원가입 진행
             if (results.length === 0) {
-                // 사용자가 없으면 자동 회원가입 진행
-                const hashedPassword = await bcrypt.hash(password, 10);
-                const insertQuery = 'INSERT INTO users (user_id, password) VALUES (?, ?)';
-                
-                db.query(insertQuery, [username], (insErr) => {
-                    if (insErr) {
-                        console.error("회원가입 실패:", insErr);
-                        return res.status(500).json({ success: false, message: '자동 회원가입 실패' });
-                    }
-                    return res.json({ success: true, username, message: '자동 회원가입 완료 및 로그인 성공' });
-                });
-            } else {
-                // 사용자가 존재하면 비밀번호 비교
+                try {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    const insertQuery = 'INSERT INTO users (user_id, password) VALUES (?, ?)';
+                    
+                    db.query(insertQuery, [username, hashedPassword], (insErr) => {
+                        if (insErr) {
+                            console.error("❌ 회원가입 SQL 실행 실패:", insErr);
+                            return res.status(500).json({ success: false, message: '회원가입 등록 실패' });
+                        }
+                        console.log(`✅ 새 유저 회원가입 성공: ${username}`);
+                        return res.json({ success: true, username, message: '자동 회원가입 완료 및 로그인 성공!' });
+                    });
+                } catch (hashErr) {
+                    console.error("❌ 비밀번호 암호화 실패:", hashErr);
+                    return res.status(500).json({ success: false, message: '비밀번호 처리 오류' });
+                }
+            } 
+            // 2. 사용자가 존재하면 비밀번호 검증 진행
+            else {
                 const user = results[0];
-                // 기존 평문 비교 혹은 bcrypt 검증 (여기선 테스트용 편의를 위해 일단 일치 처리하거나 bcrypt 호환성 유지)
-                // 만약 에러가 난다면 데이터베이스 내 비밀번호를 확인해야 합니다.
-                return res.json({ success: true, username: user.user_id, message: '로그인 성공' });
+                try {
+                    // DB에 저장된 암호화 래시값과 입력된 평문 비밀번호 비교
+                    const isMatch = await bcrypt.compare(password, user.password);
+                    
+                    if (!isMatch) {
+                        return res.status(401).json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
+                    }
+                    
+                    console.log(`✅ 로그인 성공: ${username}`);
+                    return res.json({ success: true, username: user.user_id, message: '로그인 성공!' });
+                } catch (compErr) {
+                    console.error("❌ 비밀번호 비교 에러:", compErr);
+                    return res.status(500).json({ success: false, message: '비밀번호 검증 중 오류가 발생했습니다.' });
+                }
             }
         });
     } catch (error) {
-        console.error("서버 내부 에러:", error);
-        return res.status(500).json({ success: false, error: '서버 에러' });
+        console.error("❌ 서버 내부 에러:", error);
+        return res.status(500).json({ success: false, message: '서버 에러가 발생했습니다.' });
     }
 });
-
-// [기능 2] 새 과목(To-Do) 추가 API (classify 누락 버그 수정)
+//[기능2] 새 과목(To-Do) 추가 API (classify 누락 버그 수정)
 app.post('/api/todos', (req, res) => {
     const { user_id, todo_date, subject, content } = req.body;
 
