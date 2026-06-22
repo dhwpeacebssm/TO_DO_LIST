@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo Plan - Step 2</title>
+    <title>Todo Plan - Step 3</title>
     <style>
         :root {
             --bg-color: #000000; --card-bg: #121212; --text-color: #ffffff; --text-muted: #8e8e93; --border-color: #2c2c2e;
@@ -37,8 +37,11 @@
         .day .sticker { width: 22px; height: 22px; border-radius: 38%; background: #1c1c1e; transition: background 0.2s; }
         .day .day-num { font-size: 0.75rem; font-weight: 500; color: #fff; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
         .day.active .day-num { background-color: #ffffff; color: #000000; border-radius: 50%; font-weight: 700; }
-        .calendar-grid .weekday:nth-child(6), .day:nth-child(7n-1) .day-num { color: #0a84ff; }
-        .calendar-grid .weekday:nth-child(7), .day:nth-child(7n) .day-num { color: #ff453a; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; background: #1c1c1e; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 10px; font-size: 0.9rem; outline: none; }
+        .btn-action { width: 100%; padding: 14px; background: #ffffff; color: #000000; border: none; border-radius: 10px; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
 
         .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; height: 68px; background-color: #000000; border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
         .nav-btn { background: none; border: none; color: #3a3a3c; display: flex; align-items: center; justify-content: center; cursor: pointer; width: 20%; height: 100%; }
@@ -72,19 +75,25 @@
         <div id="page-calendar" class="page">
             <div class="card">
                 <div class="calendar-header-container">
-                    <h2 id="calendar-title" class="clickable-title" onclick="toggleDatePickerPanel()">
-                        <span id="txt-year-month">2026년 6월</span><span class="arrow">▼</span>
-                    </h2>
-                    <div id="date-picker-panel" class="picker-dropdown-panel">
-                        <select id="select-year" onchange="handleDatePickerChange()"></select>
-                        <select id="select-month" onchange="handleDatePickerChange()"></select>
+                    <h2 id="calendar-title" class="clickable-title" onclick="toggleDatePickerPanel()"><span id="txt-year-month">2026년 6월</span><span class="arrow">▼</span></h2>
+                    <div id="date-picker-panel" class="picker-dropdown-panel"><select id="select-year" onchange="handleDatePickerChange()"></select><select id="select-month" onchange="handleDatePickerChange()"></select></div>
+                </div>
+                <div class="calendar-grid" id="calendar-render-target"></div>
+            </div>
+        </div>
+
+        <div id="page-add" class="page">
+            <div class="card">
+                <h2>해야할 과제 추가 창</h2>
+                <form onsubmit="handleAddTaskForm(event)">
+                    <div class="form-group"><label>과제 마감일 선택</label><input type="date" id="form-task-date" value="2026-06-10" required></div>
+                    <div class="form-group">
+                        <label>과목 카테고리 지정</label>
+                        <select id="form-task-cat"><option value="c1">공부</option><option value="c2">수행평가</option><option value="c3">기타</option></select>
                     </div>
-                </div>
-                <div class="calendar-grid" id="calendar-render-target">
-                    <div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div>
-                    <div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div>
-                    <div class="weekday">일</div>
-                </div>
+                    <div class="form-group"><label>수행할 과제 상세 내용</label><input type="text" id="form-task-text" placeholder="과제를 입력하세요" required></div>
+                    <button type="submit" class="btn-action">업로드</button>
+                </form>
             </div>
         </div>
     </div>
@@ -92,7 +101,7 @@
     <nav class="bottom-nav">
         <button class="nav-btn active" onclick="navigateTab('page-main')"><svg viewBox="0 0 24 24"><path d="M12 3L3.5 10.5V21H9.5V15.5H14.5V21H20.5V10.5L12 3Z"/></svg></button>
         <button class="nav-btn" onclick="navigateTab('page-calendar')"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM14.19 14.19L8 16L9.81 9.81L16 8L14.19 14.19Z"/></svg></button>
-        <button class="nav-btn"><svg viewBox="0 0 24 24"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18.5 16V11C18.5 7.93 16.87 5.36 14 4.68V4C14 2.9 13.1 2 12 2C10.9 2 10 2.9 10 4V4.68C7.13 5.36 5.5 7.92 5.5 11V16L3.5 18V19H20.5V18L18.5 16Z"/></svg></button>
+        <button class="nav-btn" onclick="navigateTab('page-add')"><svg viewBox="0 0 24 24"><path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18.5 16V11C18.5 7.93 16.87 5.36 14 4.68V4C14 2.9 13.1 2 12 2C10.9 2 10 2.9 10 4V4.68C7.13 5.36 5.5 7.92 5.5 11V16L3.5 18V19H20.5V18L18.5 16Z"/></svg></button>
         <button class="nav-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"/></svg></button>
         <button class="nav-btn"><svg viewBox="0 0 24 24"><path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"/></svg></button>
     </nav>
@@ -121,7 +130,7 @@
             document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`; renderCalendarView();
         }
         function renderCalendarView() {
-            const grid = document.getElementById('calendar-render-target'); const heads = grid.querySelectorAll('.weekday'); grid.innerHTML = ''; heads.forEach(h => grid.appendChild(h));
+            const grid = document.getElementById('calendar-render-target'); grid.innerHTML = '<div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div><div class="weekday">일</div>';
             const firstDayIndex = new Date(currentYear, currentMonth - 1, 1).getDay(); const totalDays = new Date(currentYear, currentMonth, 0).getDate();
             let emptySlots = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
             for (let s = 0; s < emptySlots; s++) { const blank = document.createElement('div'); blank.className = 'day empty'; grid.appendChild(blank); }
@@ -132,11 +141,24 @@
                 dayNode.innerHTML = `<div class="sticker" style="${stickerStyle}"></div><div class="day-num">${i}</div>`; grid.appendChild(dayNode);
             }
         }
-        function setCalendarActiveDay(day) { selectedDay = day; renderCalendarView(); alert(`기준일이 [${currentYear}년 ${currentMonth}월 ${day}일]로 고정되었습니다.`); }
+        function setCalendarActiveDay(day) {
+            selectedDay = day; renderCalendarView();
+            document.getElementById('form-task-date').value = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            alert(`기준일이 [${currentYear}년 ${currentMonth}월 ${day}일]로 고정되었습니다.`);
+        }
         function navigateTab(targetPageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(targetPageId).classList.add('active'); event.currentTarget.classList.add('active');
             if (targetPageId === 'page-calendar') renderCalendarView();
+        }
+        function handleAddTaskForm(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('form-task-date').value; const catVal = document.getElementById('form-task-cat').value; const textVal = document.getElementById('form-task-text').value;
+            const parts = dateVal.split('-'); const y = parseInt(parts[0]); const m = parseInt(parts[1]); const d = parseInt(parts[2]);
+            globalTasks.push({ id: Date.now(), year: y, month: m, day: d, cat: catVal, text: textVal, done: false });
+            alert(`과제가 저장되었습니다.`); document.getElementById('form-task-text').value = '';
+            currentYear = y; currentMonth = m; selectedDay = d; document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`;
+            navigateTab('page-calendar');
         }
     </script>
 </body>
