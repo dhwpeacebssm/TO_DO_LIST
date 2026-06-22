@@ -410,40 +410,46 @@
         }
 
         // 🟢 [기능 1] 로그인 및 자동 회원가입 API 연동
-        async function handleAuthSubmit(e) {
-            e.preventDefault(); 
-            const idInput = document.getElementById('auth-username').value;
-            const passwordInput = document.getElementById('auth-password').value;
+       // website.html의 맨 아래 handleAuthSubmit 함수를 이 코드로 덮어씌우세요.
+async function handleAuthSubmit(e) {
+    e.preventDefault(); 
+    const idInput = document.getElementById('auth-username').value;
+    const passwordInput = document.getElementById('auth-password').value;
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: idInput, password: passwordInput })
-                });
-                const result = await response.json();
+    try {
+        // 현재 브라우저가 접속 중인 포트(3000 또는 3001 등)를 자동으로 추적하여 요청을 보냅니다.
+        const currentOrigin = window.location.origin; 
+        
+        const response = await fetch(`${currentOrigin}/api/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: idInput, password: passwordInput })
+        });
+        
+        const result = await response.json();
 
-                if (response.ok && result.success) {
-                    // 로그인 세션 상태 저장 (전역 변수)
-                    loggedInUserId = result.username;
+        if (response.ok && result.success) {
+            // 로그인 세션 상태 저장 (전역 변수)
+            loggedInUserId = result.username;
 
-                    // 헤더 UI 업데이트
-                    document.getElementById('global-username').innerText = result.username; 
-                    document.getElementById('global-avatar').innerText = result.username.slice(0, 2).toUpperCase();
-                    
-                    alert(result.message); // "자동 회원가입 완료 및 로그인 성공" 혹은 "로그인 성공"
+            // 헤더 UI 업데이트
+            document.getElementById('global-username').innerText = result.username; 
+            document.getElementById('global-avatar').innerText = result.username.slice(0, 2).toUpperCase();
+            
+            alert(result.message); 
 
-                    // 이 사용자의 할 일 데이터를 백엔드에서 긁어옴
-                    await fetchUserTodos();
-                    navigateTab('page-main');
-                } else {
-                    alert(result.message || "로그인 실패");
-                }
-            } catch (error) {
-                console.error("인증 처리 에러:", error);
-                alert("서버 연결에 실패했습니다.");
-            }
+            // 이 사용자의 할 일 데이터를 백엔드에서 긁어옴
+            await fetchUserTodos();
+            navigateTab('page-main');
+        } else {
+            alert(result.message || "로그인 실패");
         }
+    } catch (error) {
+        // 에러를 무작정 숨기지 않고 브라우저 콘솔창에 디테일하게 출력합니다.
+        console.error("❌ 실제 에러 원인 내용:", error);
+        alert("서버 연결에 실패했습니다. F12 개발자 도구 콘솔창을 확인해 보세요.");
+    }
+}
     </script>
 </body>
 </html>
