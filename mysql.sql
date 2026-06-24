@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- 3. 할 일(To-do List) 테이블 생성
 CREATE TABLE IF NOT EXISTS todos (
-    todo_id INT AUTO_INCREMENT,ß
+    todo_id INT AUTO_INCREMENT,
     user_id VARCHAR(50) NOT NULL,
     todo_date DATE NOT NULL,
     subject VARCHAR(100) NOT NULL,

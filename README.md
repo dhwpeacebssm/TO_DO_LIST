@@ -1,25 +1,26 @@
-# Todo Plan
-## 주제: To_do_list
+## 🗄️ Database 구조 (MySQL)
 
-### 핵심기능
-### 1. 사용자 아이디와 비밀번호를 입력받고 회원가입 및 로그인
-### 2. 사용자가 원하는 과목과 날짜를 입력받고 캘린더에 보여줌
-### 3. today 체크리스트
+본 프로젝트는 `todo_db` 데이터베이스를 사용하며, 회원 관리를 위한 `users` 테이블과 일정 관리를 위한 `todos` 테이블로 구성되어 상호 외래키(Foreign Key)로 연결되어 있습니다.
 
-### 테이블 구성
+### 1. users (사용자/회원 테이블)
+서비스를 이용하는 사용자의 계정 정보를 저장합니다.
+* **`user_id`** (VARCHAR(50), PK): 사용자가 가입 시 설정한 고유 아이디입니다. 로그인 및 각 사용자의 일정을 구별하는 고유 식별자 역할을 합니다.
+* **`password`** (VARCHAR(255)): 사용자의 비밀번호입니다. 보안성을 높이기 위해 암호화(bcrypt)된 형태로 저장됩니다.
+* **`created_at`** (TIMESTAMP): 유저가 처음 회원가입(계정 생성)을 완료한 날짜와 시간 정보가 자동으로 기록됩니다.
 
-| users | user_id(varchar(50), not null): 사용자의 아이디를 입력받는다. 필수입력, 기본키
-|-------|-------|
+### 2. todos (할 일 목록 테이블)
+사용자가 등록한 과제, 공부 등의 일정 데이터를 저장합니다.
+* **`todo_id`** (INT, PK, Auto Increment): 일정이 추가될 때마다 순차적으로 자동 증가하는 일정의 고유 번호입니다. 특정 일정을 수정하거나 삭제할 때 타겟 아이디로 쓰입니다.
+* **`user_id`** (VARCHAR(50), FK): 이 일정을 등록한 주인의 아이디입니다. `users` 테이블의 `user_id`를 참조(References)하며, 사용자가 탈퇴하면 연쇄 삭제(ON DELETE CASCADE)되도록 설계되었습니다.
+* **`todo_date`** (DATE): 과제나 일정의 마감일 및 수행 날짜를 저장합니다 (예: `2026-06-10`).
+* **`subject`** (VARCHAR(100)): 사용자가 선택한 과목 카테고리 코드 정보가 저장됩니다 (`c1`, `c2`, `c3`).
+* **`classify`** (VARCHAR(50)): 과목의 대분류(공부, 수행평가, 기타) 명칭을 명확히 분류하여 저장합니다.
+* **`content`** (TEXT): 할 일 또는 과제의 세부적이고 구체적인 텍스트 내용이 담깁니다.
+* **`is_completed`** (TINYINT(1)): 체크리스트 완료 상태를 나타냅니다. `0`은 미완료(Incomplete), `1`은 완료(Completed)를 의미합니다.
+* **`created_at`** (TIMESTAMP): 해당 일정이 최초로 업로드되어 데이터베이스에 기록된 시간입니다.
 
-#### 2. password(varchar(225), not null): 사용자의 비밀번호를 입력받는다. 보안을 위해 저장장소를 늘렸다. 필수입력
-#### 3. created_at (timestamp): 가입날짜를 받음
 
-### 2. todos
-#### 1. todo_id(int, auto increament): 자동으로 값 증가, 기본키
-#### 2. user_id(varchar(50)): 왜래키
-#### 3. todo_date(date, not null): 추가한 과목의 날짜를 입력받음. 팔수입력
-#### 4. subject(varchar(100)): 추가한 과목 이름을 입력받음
-#### 5. classify varchar(50) NOT NULL: 과목을 분류할 공부, 수행평가, 기타 중 한 개 선택한 것을 입력받음
-#### 6. content TEXT NOT NULL: 
-#### 7. is_complete TINYINT(1): 체크리스트에서 오늘할 것을 했는지, 참 거짓으로 받기 => TINYINT 사용
+## 🌐 Front-end 핵심 함수 설명 (HTML / JavaScript)
+
+`website.html`에 내장된 스크립트는 캘린더 인터페이스 제어, 백엔드 API와의 실시간 비동기 통신(fetch), 동적 UI 리렌더링을 담당합니다.
 
