@@ -192,262 +192,271 @@
     </nav>
 
     <script>
-        let currentYear = 2026; 
-        let currentMonth = 6; 
-        let selectedDay = 10;
-        let loggedInUserId = null; // 로그인된 사용자 ID를 저장하는 공간
-        let globalTasks = [];      // 서버에서 가져온 전체 To-Do 데이터를 담을 배열
+        // website.html 맨 아래의 <script> 태그 안의 내용을 이 코드로 완전히 교체하세요.
+let currentYear = 2026; 
+let currentMonth = 6; 
+let selectedDay = 10;
+let loggedInUserId = null; // 로그인된 사용자 ID를 저장하는 공간
+let globalTasks = [];      // 서버에서 가져온 전체 To-Do 데이터를 담을 배열
 
-        window.addEventListener('DOMContentLoaded', () => { 
-            initializeDatePickerOptions(); 
-            renderCalendarView(); 
+window.addEventListener('DOMContentLoaded', () => { 
+    initializeDatePickerOptions(); 
+    renderCalendarView(); 
+});
+
+function initializeDatePickerOptions() {
+    const yearSel = document.getElementById('select-year'); 
+    const monthSel = document.getElementById('select-month');
+    for (let y = 2020; y <= 2030; y++) { 
+        const opt = document.createElement('option'); opt.value = y; opt.innerText = `${y}년`; 
+        if(y === currentYear) opt.selected = true; 
+        yearSel.appendChild(opt); 
+    }
+    for (let m = 1; m <= 12; m++) { 
+        const opt = document.createElement('option'); opt.value = m; opt.innerText = `${m}월`; 
+        if(m === currentMonth) opt.selected = true; 
+        monthSel.appendChild(opt); 
+    }
+}
+
+function toggleDatePickerPanel() {
+    const panel = document.getElementById('date-picker-panel'); 
+    const title = document.getElementById('calendar-title');
+    if (panel.style.display === 'flex') { 
+        panel.style.display = 'none'; title.classList.remove('open'); 
+    } else { 
+        panel.style.display = 'flex'; title.classList.add('open'); 
+    }
+}
+
+function handleDatePickerChange() {
+    currentYear = parseInt(document.getElementById('select-year').value); 
+    currentMonth = parseInt(document.getElementById('select-month').value);
+    document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`; 
+    renderCalendarView();
+}
+
+// 백엔드에서 해당 유저의 전체 할 일 목록을 받아오는 함수
+async function fetchUserTodos() {
+    if (!loggedInUserId) return;
+    try {
+        const response = await fetch(`/api/todos/${loggedInUserId}`);
+        if (response.ok) {
+            const data = await response.json();
+            globalTasks = data.map(todo => {
+                const dateObj = new Date(todo.todo_date);
+                return {
+                    id: todo.todo_id,
+                    year: dateObj.getFullYear(),
+                    month: dateObj.getMonth() + 1,
+                    day: dateObj.getDate(),
+                    cat: todo.subject, 
+                    text: todo.content,
+                    done: todo.is_completed === 1
+                };
+            });
+            renderCalendarView();
+        }
+    } catch (error) {
+        console.error("데이터 조회 실패:", error);
+    }
+}
+
+function renderCalendarView() {
+    const grid = document.getElementById('calendar-render-target'); 
+    const heads = grid.querySelectorAll('.weekday'); 
+    grid.innerHTML = ''; 
+    heads.forEach(h => grid.appendChild(h));
+
+    const firstDayIndex = new Date(currentYear, currentMonth - 1, 1).getDay(); 
+    const totalDays = new Date(currentYear, currentMonth, 0).getDate();
+    let emptySlots = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+    for (let s = 0; s < emptySlots; s++) { 
+        const blank = document.createElement('div'); 
+        blank.className = 'day empty'; 
+        grid.appendChild(blank); 
+    }
+
+    for (let i = 1; i <= totalDays; i++) {
+        const dayNode = document.createElement('div'); 
+        const isSelected = (i === selectedDay); 
+        dayNode.className = `day ${isSelected ? 'active' : ''}`; 
+        dayNode.setAttribute('onclick', `setCalendarActiveDay(${i})`);
+
+        const dayTasks = globalTasks.filter(t => t.year === currentYear && t.month === currentMonth && t.day === i);
+        let stickerStyle = ''; 
+        if (dayTasks.length > 0) { 
+            const incomplete = dayTasks.find(t => !t.done); 
+            const pivot = incomplete ? incomplete : dayTasks[0]; 
+            stickerStyle = `background: var(--color-${pivot.cat.slice(1)});`; 
+        }
+        dayNode.innerHTML = `<div class="sticker" style="${stickerStyle}"></div><div class="day-num">${i}</div>`; 
+        grid.appendChild(dayNode);
+    }
+}
+
+function setCalendarActiveDay(day) {
+    selectedDay = day; 
+    renderCalendarView();
+    document.getElementById('form-task-date').value = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    alert(`기준일이 [${currentYear}년 ${currentMonth}월 ${day}일]로 고정되었습니다. 프로젝트 탭에서 확인해 보세요!`);
+}
+
+// 🔴 [오류 수정 완료] event 객체 누락 시 튕기는 버그가 수정된 안전한 네비게이션 함수
+function navigateTab(targetPageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    const targetPage = document.getElementById(targetPageId);
+    if (targetPage) {
+        targetPage.classList.add('active'); 
+    }
+    
+    // 클릭 이벤트가 존재할 때만 불빛을 켜고, 로그인 후 자동 이동 시에는 디폴트로 첫 번째 홈 버튼 불빛을 켭니다.
+    if (typeof event !== 'undefined' && event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    } else {
+        const homeBtn = document.querySelector('.nav-btn');
+        if (homeBtn) homeBtn.classList.add('active');
+    }
+    
+    if (targetPageId === 'page-calendar') renderCalendarView();
+    if (targetPageId === 'page-manage') renderProjectDashboard();
+}
+
+// 새 과목(To-Do) 추가 연동
+async function handleAddTaskForm(e) {
+    e.preventDefault();
+    if (!loggedInUserId) {
+        alert("로그인이 필요한 서비스입니다.");
+        navigateTab('page-login');
+        return;
+    }
+
+    const dateVal = document.getElementById('form-task-date').value; 
+    const catVal = document.getElementById('form-task-cat').value; 
+    const textVal = document.getElementById('form-task-text').value;
+
+    const payload = {
+        user_id: loggedInUserId,
+        todo_date: dateVal,
+        subject: catVal,
+        content: textVal
+    };
+
+    try {
+        const response = await fetch('/api/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+        const result = await response.json();
 
-        function initializeDatePickerOptions() {
-            const yearSel = document.getElementById('select-year'); 
-            const monthSel = document.getElementById('select-month');
-            for (let y = 2020; y <= 2030; y++) { 
-                const opt = document.createElement('option'); opt.value = y; opt.innerText = `${y}년`; 
-                if(y === currentYear) opt.selected = true; 
-                yearSel.appendChild(opt); 
-            }
-            for (let m = 1; m <= 12; m++) { 
-                const opt = document.createElement('option'); opt.value = m; opt.innerText = `${m}월`; 
-                if(m === currentMonth) opt.selected = true; 
-                monthSel.appendChild(opt); 
-            }
-        }
-
-        function toggleDatePickerPanel() {
-            const panel = document.getElementById('date-picker-panel'); 
-            const title = document.getElementById('calendar-title');
-            if (panel.style.display === 'flex') { 
-                panel.style.display = 'none'; title.classList.remove('open'); 
-            } else { 
-                panel.style.display = 'flex'; title.classList.add('open'); 
-            }
-        }
-
-        function handleDatePickerChange() {
-            currentYear = parseInt(document.getElementById('select-year').value); 
-            currentMonth = parseInt(document.getElementById('select-month').value);
-            document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`; 
-            renderCalendarView();
-        }
-
-        // 🟢 백엔드에서 해당 유저의 전체 할 일 목록을 받아오는 함수
-        async function fetchUserTodos() {
-            if (!loggedInUserId) return;
-            try {
-                const response = await fetch(`/api/todos/${loggedInUserId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    // DB 컬럼 구조를 캘린더에서 쓰기 편하게 가공 처리
-                    globalTasks = data.map(todo => {
-                        const dateObj = new Date(todo.todo_date);
-                        return {
-                            id: todo.todo_id,
-                            year: dateObj.getFullYear(),
-                            month: dateObj.getMonth() + 1,
-                            day: dateObj.getDate(),
-                            cat: todo.subject, // DB의 subject (c1, c2, c3 등)
-                            text: todo.content,
-                            done: todo.is_completed === 1
-                        };
-                    });
-                    renderCalendarView();
-                }
-            } catch (error) {
-                console.error("데이터 조회 실패:", error);
-            }
-        }
-
-        function renderCalendarView() {
-            const grid = document.getElementById('calendar-render-target'); 
-            const heads = grid.querySelectorAll('.weekday'); 
-            grid.innerHTML = ''; 
-            heads.forEach(h => grid.appendChild(h));
-
-            const firstDayIndex = new Date(currentYear, currentMonth - 1, 1).getDay(); 
-            const totalDays = new Date(currentYear, currentMonth, 0).getDate();
-            let emptySlots = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
-
-            for (let s = 0; s < emptySlots; s++) { 
-                const blank = document.createElement('div'); 
-                blank.className = 'day empty'; 
-                grid.appendChild(blank); 
-            }
-
-            for (let i = 1; i <= totalDays; i++) {
-                const dayNode = document.createElement('div'); 
-                const isSelected = (i === selectedDay); 
-                dayNode.className = `day ${isSelected ? 'active' : ''}`; 
-                dayNode.setAttribute('onclick', `setCalendarActiveDay(${i})`);
-
-                const dayTasks = globalTasks.filter(t => t.year === currentYear && t.month === currentMonth && t.day === i);
-                let stickerStyle = ''; 
-                if (dayTasks.length > 0) { 
-                    const incomplete = dayTasks.find(t => !t.done); 
-                    const pivot = incomplete ? incomplete : dayTasks[0]; 
-                    stickerStyle = `background: var(--color-${pivot.cat.slice(1)});`; 
-                }
-                dayNode.innerHTML = `<div class="sticker" style="${stickerStyle}"></div><div class="day-num">${i}</div>`; 
-                grid.appendChild(dayNode);
-            }
-        }
-
-        function setCalendarActiveDay(day) {
-            selectedDay = day; 
-            renderCalendarView();
-            document.getElementById('form-task-date').value = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            alert(`기준일이 [${currentYear}년 ${currentMonth}월 ${day}일]로 고정되었습니다. 프로젝트 탭에서 확인해 보세요!`);
-        }
-
-        function navigateTab(targetPageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if (result.success) {
+            alert(result.message);
+            document.getElementById('form-task-text').value = '';
             
-            document.getElementById(targetPageId).classList.add('active'); 
-            event.currentTarget.classList.add('active');
+            const parts = dateVal.split('-');
+            currentYear = parseInt(parts[0]); 
+            currentMonth = parseInt(parts[1]); 
+            selectedDay = parseInt(parts[2]); 
+            document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`;
             
-            if (targetPageId === 'page-calendar') renderCalendarView();
-            if (targetPageId === 'page-manage') renderProjectDashboard();
+            await fetchUserTodos();
+            navigateTab('page-manage');
+        } else {
+            alert("일정 등록 실패: " + result.error);
         }
+    } catch (error) {
+        console.error("일정 등록 중 에러 발생:", error);
+    }
+}
 
-        // 🟢 [기능 2] 새 과목(To-Do) 추가 연동
-        async function handleAddTaskForm(e) {
-            e.preventDefault();
-            if (!loggedInUserId) {
-                alert("로그인이 필요한 서비스입니다.");
-                navigateTab('page-login');
-                return;
-            }
-
-            const dateVal = document.getElementById('form-task-date').value; 
-            const catVal = document.getElementById('form-task-cat').value; 
-            const textVal = document.getElementById('form-task-text').value;
-
-            const payload = {
-                user_id: loggedInUserId,
-                todo_date: dateVal,
-                subject: catVal,
-                content: textVal
-            };
-
-            try {
-                const response = await fetch('/api/todos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    alert(result.message);
-                    document.getElementById('form-task-text').value = '';
-                    
-                    const parts = dateVal.split('-');
-                    currentYear = parseInt(parts[0]); 
-                    currentMonth = parseInt(parts[1]); 
-                    selectedDay = parseInt(parts[2]); 
-                    document.getElementById('txt-year-month').innerText = `${currentYear}년 ${currentMonth}월`;
-                    
-                    // DB 데이터를 새로 갱신 후 대시보드로 이동
-                    await fetchUserTodos();
-                    navigateTab('page-manage');
-                } else {
-                    alert("일정 등록 실패: " + result.error);
-                }
-            } catch (error) {
-                console.error("일정 등록 중 에러 발생:", error);
-            }
-        }
-
-        function renderProjectDashboard() {
-            document.getElementById('target-day-title').innerText = `${currentMonth}월 ${selectedDay}일 기준`;
-            const cats = ['c1', 'c2', 'c3'];
-            const todayTasks = globalTasks.filter(t => t.year === currentYear && t.month === currentMonth && t.day === selectedDay);
-            
-            cats.forEach(cat => {
-                const listContainer = document.getElementById(`manage-list-${cat}`); 
-                listContainer.innerHTML = '';
-                const targets = todayTasks.filter(t => t.cat === cat);
-                
+function renderProjectDashboard() {
+    document.getElementById('target-day-title').innerText = `${currentMonth}월 ${selectedDay}일 기준`;
+    const cats = ['c1', 'c2', 'c3'];
+    const todayTasks = globalTasks.filter(t => t.year === currentYear && t.month === currentMonth && t.day === selectedDay);
+    
+    cats.forEach(cat => {
+        const listContainer = document.getElementById(`manage-list-${cat}`); 
+        listContainer.innerHTML = '';
+        const targets = todayTasks.filter(t => t.cat === cat);
+        
                 if (targets.length === 0) { 
-                    listContainer.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; padding: 2px 0;">지정 일자 과제가 없습니다.</p>`; 
-                } else {
-                    targets.forEach(todo => {
-                        const row = document.createElement('div'); 
-                        row.className = `todo-item ${todo.done ? 'completed' : ''}`; 
-                        row.style.color = `var(--color-${cat.slice(1)})`;
-                        row.innerHTML = `<input type="checkbox" ${todo.done ? 'checked' : ''} onclick="toggleProjectState(${todo.id}, ${todo.done})"><span>${todo.text}</span>`;
-                        listContainer.appendChild(row);
-                    });
-                }
+            listContainer.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; padding: 2px 0;">지정 일자 과제가 없습니다.</p>`; 
+        } else {
+            targets.forEach(todo => {
+                const row = document.createElement('div'); 
+                row.className = `todo-item ${todo.done ? 'completed' : ''}`; 
+                row.style.color = `var(--color-${cat.slice(1)})`;
+                row.innerHTML = `<input type="checkbox" ${todo.done ? 'checked' : ''} onclick="toggleProjectState(${todo.id}, ${todo.done})"><span>${todo.text}</span>`;
+                listContainer.appendChild(row);
             });
         }
+    });
+}
 
-        // 🟢 [기능 4] 할 일 완료 여부 토글 API 연동
-        async function toggleProjectState(id, currentDoneStatus) {
-            try {
-                const response = await fetch(`/api/todos/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ is_completed: currentDoneStatus ? 0 : 1 })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    // 화면 상태 반영을 위해 로컬 데이터 갱신 및 대시보드 리렌더링
-                    globalTasks = globalTasks.map(t => t.id === id ? { ...t, done: !t.done } : t); 
-                    renderProjectDashboard();
-                } else {
-                    alert("상태 수정 실패");
-                }
-            } catch (error) {
-                console.error("상태 업데이트 실패:", error);
-            }
+// 할 일 완료 여부 토글 API 연동
+async function toggleProjectState(id, currentDoneStatus) {
+    try {
+        const response = await fetch(`/api/todos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_completed: currentDoneStatus ? 0 : 1 })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            globalTasks = globalTasks.map(t => t.id === id ? { ...t, done: !t.done } : t); 
+            renderProjectDashboard();
+        } else {
+            alert("상태 수정 실패");
         }
+    } catch (error) {
+        console.error("상태 업데이트 실패:", error);
+    }
+}
 
-        // 🟢 [기능 1] 로그인 및 자동 회원가입 API 연동
-       // website.html의 맨 아래 handleAuthSubmit 함수를 이 코드로 덮어씌우세요.
+// 🔴 [구조 복구 완료] 중괄호 닫힘 오류가 해결된 로그인 함수
 async function handleAuthSubmit(e) {
     e.preventDefault(); 
     const idInput = document.getElementById('auth-username').value;
     const passwordInput = document.getElementById('auth-password').value;
 
     try {
-        // 현재 브라우저가 접속 중인 포트(3000 또는 3001 등)를 자동으로 추적하여 요청을 보냅니다.
         const currentOrigin = window.location.origin; 
-        
+        console.log("요청 보내는 목적지 주소:", `${currentOrigin}/api/login`);
+
         const response = await fetch(`${currentOrigin}/api/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: idInput, password: passwordInput })
         });
         
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            alert(`로그인 실패: ${errorData.message || '서버 오류가 발생했습니다.'}`);
+            return;
+        }
+
         const result = await response.json();
 
-        if (response.ok && result.success) {
-            // 로그인 세션 상태 저장 (전역 변수)
+        if (result.success) {
             loggedInUserId = result.username;
-
-            // 헤더 UI 업데이트
             document.getElementById('global-username').innerText = result.username; 
             document.getElementById('global-avatar').innerText = result.username.slice(0, 2).toUpperCase();
             
             alert(result.message); 
 
-            // 이 사용자의 할 일 데이터를 백엔드에서 긁어옴
             await fetchUserTodos();
             navigateTab('page-main');
         } else {
             alert(result.message || "로그인 실패");
         }
     } catch (error) {
-        // 에러를 무작정 숨기지 않고 브라우저 콘솔창에 디테일하게 출력합니다.
-        console.error("❌ 실제 에러 원인 내용:", error);
-        alert("서버 연결에 실패했습니다. F12 개발자 도구 콘솔창을 확인해 보세요.");
+        console.error("❌ 실제 네트워크 에러 상세 내용:", error);
+        alert("서버 연결에 실패했습니다. 크롬 F12를 눌러 콘솔(Console) 탭의 에러 메시지를 확인해 주세요.");
     }
 }
     </script>
