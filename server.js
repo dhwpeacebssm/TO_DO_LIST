@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = 3003;
 
 // JSON 및 Form 데이터 파싱 미들웨어
 app.use(express.json());

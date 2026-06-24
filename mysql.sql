@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- 3. 할 일(To-do List) 테이블 생성
 CREATE TABLE IF NOT EXISTS todos (
-    todo_id INT AUTO_INCREMENT,
+    todo_id INT AUTO_INCREMENT,ß
     user_id VARCHAR(50) NOT NULL,
     todo_date DATE NOT NULL,
     subject VARCHAR(100) NOT NULL,
@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS todos (
     content TEXT NOT NULL,
     is_completed TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    classify VARCHAR(50) NOT NULL,
     PRIMARY KEY (todo_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+USE todo_db;
+ALTER TABLE todos ADD COLUMN classify VARCHAR(50) NOT NULL AFTER subject;
